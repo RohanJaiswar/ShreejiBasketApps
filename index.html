@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shreeji Basket — Fresh Milk & Dairy</title>
+    <meta name="description" content="Shreeji Basket – Order fresh milk and dairy products from your trusted vendor.">
+
+    <!-- ═══ PWA / Install Meta Tags ══════════════════════════════════════ -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ShreejiBasket">
+    <meta name="application-name" content="Shreeji Basket">
+
+    <!-- ═══ Favicon & Apple Touch Icons ════════════════════════════════ -->
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png">
+    <link rel="shortcut icon" href="assets/icon-192.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="assets/icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="assets/icon-512.png">
+
+    <!-- ═══ Open Graph / Rich Share Preview ════════════════════════════ -->
+    <meta property="og:title" content="Shreeji Basket – Fresh Dairy Daily">
+    <meta property="og:description" content="Order fresh milk and dairy products from your trusted vendor.">
+    <meta property="og:image" content="assets/icon-512.png">
+    <meta property="og:type" content="website">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ===================== SPLASH SCREEN ===================== -->
+<div id="splash-screen" class="screen active">
+    <div class="splash-particles" id="splash-particles"></div>
+    <div class="logo-container">
+        <img src="assets/logo-shree.png" alt="Shreeji Logo" class="logo" onerror="this.style.display='none'">
+        <h1 class="splash-title">Shreeji Basket</h1>
+        <p class="splash-subtitle">Fresh Dairy, Daily</p>
+        <div class="splash-loader"><div class="splash-loader-bar"></div></div>
+    </div>
+</div>
+
+<!-- ===================== LOGIN SCREEN ===================== -->
+<div id="login-screen" class="screen hidden">
+    <div class="login-container">
+        <div class="login-hero">
+            <img src="assets/logo-shree.png" alt="Shreeji Logo" class="login-logo" onerror="this.style.display='none'">
+            <h2>Welcome Back</h2>
+            <p>Sign in to your account</p>
+        </div>
+        <div class="login-body">
+            <div class="error-msg" id="login-error"></div>
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="phone">Phone Number</label>
+                    <div class="input-wrap">
+                        <i data-lucide="phone"></i>
+                        <input type="tel" id="phone" placeholder="Enter your phone number" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <div class="input-wrap">
+                        <i data-lucide="lock"></i>
+                        <input type="password" id="password" placeholder="Enter your password" required>
+                    </div>
+                </div>
+                <div class="options">
+                    <label><input type="checkbox"> Remember me</label>
+                    <a href="#" class="forgot-password">Forgot Password?</a>
+                </div>
+                <button type="submit" class="btn-primary" id="btn-customer-login">
+                    <i data-lucide="log-in"></i> Sign In
+                </button>
+            </form>
+            <div class="switch-link">
+                <p>Are you a vendor? <a href="#" id="vendor-login-link">Vendor Login</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== VENDOR LOGIN SCREEN ===================== -->
+<div id="vendor-login-screen" class="screen hidden">
+    <div class="login-container">
+        <div class="login-hero">
+            <img src="assets/logo-shree.png" alt="Shreeji Logo" class="login-logo" onerror="this.style.display='none'">
+            <h2>Vendor Portal</h2>
+            <p>Access your vendor dashboard</p>
+        </div>
+        <div class="login-body">
+            <div class="role-badge"><i data-lucide="store" style="width:14px;height:14px;"></i> Vendor Access</div>
+            <div class="error-msg" id="vendor-error"></div>
+            <form id="vendor-login-form">
+                <div class="input-group">
+                    <label for="vendor-username">Username</label>
+                    <div class="input-wrap">
+                        <i data-lucide="user"></i>
+                        <input type="text" id="vendor-username" placeholder="Enter your username" required autocomplete="username">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="vendor-password">Password</label>
+                    <div class="input-wrap">
+                        <i data-lucide="lock"></i>
+                        <input type="password" id="vendor-password" placeholder="Enter your password" required autocomplete="current-password">
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary" id="btn-vendor-login">
+                    <i data-lucide="log-in"></i> Vendor Sign In
+                </button>
+            </form>
+            <div class="switch-link">
+                <p>Not a vendor? <a href="#" id="customer-login-link">Customer Login</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== HOME SCREEN ===================== -->
+<div id="home-screen" class="screen hidden">
+    <!-- Header -->
+    <header class="app-header">
+        <div class="user-info">
+            <div class="avatar" id="user-avatar-initial">U</div>
+            <div class="greeting">
+                <p id="greeting-time">Good Morning,</p>
+                <h3 id="user-name-display">User</h3>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button id="theme-toggle" class="icon-btn" title="Toggle Theme">
+                <i data-lucide="sun" id="theme-icon-light"></i>
+                <i data-lucide="moon" id="theme-icon-dark" style="display:none;"></i>
+            </button>
+            <button class="icon-btn cart-badge-btn" id="cart-btn" title="Cart">
+                <i data-lucide="shopping-cart"></i>
+                <span class="cart-count-badge" id="cart-count">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Scrollable content area -->
+    <div class="home-content" id="home-content">
+        <!-- Products tab content (default) -->
+        <div id="tab-home">
+            <div class="home-banner">
+                <h3>Fresh Every Morning 🥛</h3>
+                <p>Your daily dairy delivered fresh</p>
+                <span class="banner-store" id="banner-store-name">Shreeji Basket</span>
+            </div>
+
+            <!-- Category tabs -->
+            <div class="category-tabs" id="category-tabs">
+                <div class="cat-tab active" data-cat="all">All</div>
+            </div>
+
+            <div class="section-header">
+                <h4>Our Products</h4>
+            </div>
+
+            <!-- Products grid -->
+            <div class="products-grid" id="products-grid">
+                <div class="loading-products" style="grid-column:span 2">
+                    <div class="spinner"></div>
+                    Loading products...
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders tab content -->
+        <div id="tab-orders" style="display:none;">
+            <div class="section-header mt8" style="padding-top:16px;">
+                <h4>My Orders</h4>
+            </div>
+            <div class="orders-content" id="orders-list">
+                <div class="loading-products"><div class="spinner"></div>Loading orders...</div>
+            </div>
+        </div>
+
+        <!-- Profile tab content -->
+        <div id="tab-profile" style="display:none;">
+            <div style="padding: 16px 0 0;">
+                <div class="profile-card">
+                    <div class="profile-avatar-lg" id="profile-avatar-lg">U</div>
+                    <h3 id="profile-name">User</h3>
+                    <p id="profile-store"></p>
+                    <span class="profile-badge" id="profile-role">Customer</span>
+                </div>
+                <div class="menu-list">
+                    <div class="menu-item">
+                        <div class="menu-item-icon"><i data-lucide="bell" style="width:18px;height:18px;"></i></div>
+                        <span class="menu-item-label">Notifications</span>
+                        <i data-lucide="chevron-right" class="chevron" style="width:16px;height:16px;"></i>
+                    </div>
+                    <div class="menu-item">
+                        <div class="menu-item-icon"><i data-lucide="map-pin" style="width:18px;height:18px;"></i></div>
+                        <span class="menu-item-label">Delivery Address</span>
+                        <i data-lucide="chevron-right" class="chevron" style="width:16px;height:16px;"></i>
+                    </div>
+                    <div class="menu-item">
+                        <div class="menu-item-icon"><i data-lucide="help-circle" style="width:18px;height:18px;"></i></div>
+                        <span class="menu-item-label">Help & Support</span>
+                        <i data-lucide="chevron-right" class="chevron" style="width:16px;height:16px;"></i>
+                    </div>
+                    <div class="menu-item" id="btn-logout" style="cursor:pointer;">
+                        <div class="menu-item-icon" style="background:rgba(239,68,68,0.1); color:var(--danger);">
+                            <i data-lucide="log-out" style="width:18px;height:18px;"></i>
+                        </div>
+                        <span class="menu-item-label" style="color:var(--danger);">Logout</span>
+                        <i data-lucide="chevron-right" class="chevron" style="width:16px;height:16px;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active" id="nav-home" data-tab="tab-home">
+            <i data-lucide="home" class="nav-icon"></i>
+            <span>Home</span>
+        </a>
+        <a href="#" class="nav-item" id="nav-orders" data-tab="tab-orders">
+            <i data-lucide="package" class="nav-icon"></i>
+            <span>Orders</span>
+        </a>
+        <a href="#" class="nav-item" id="nav-wallet" data-tab="tab-wallet">
+            <i data-lucide="wallet" class="nav-icon"></i>
+            <span>Wallet</span>
+        </a>
+        <a href="#" class="nav-item" id="nav-profile" data-tab="tab-profile">
+            <i data-lucide="user" class="nav-icon"></i>
+            <span>Profile</span>
+        </a>
+    </nav>
+</div>
+
+<!-- ===================== CART SHEET (overlay on home) ===================== -->
+<div id="cart-overlay" class="order-success-overlay" style="align-items:flex-end; padding-bottom:0;">
+    <div class="cart-sheet">
+        <div class="cart-handle"></div>
+        <h3>Your Cart 🛒</h3>
+        <div class="cart-items" id="cart-items-list">
+            <div class="cart-empty">
+                <div class="cart-empty-icon">🛒</div>
+                <p>Your cart is empty</p>
+            </div>
+        </div>
+        <div class="cart-total-row">
+            <span>Total Amount</span>
+            <strong id="cart-total">₹0.00</strong>
+        </div>
+        <button class="btn-primary" id="btn-place-order" style="margin-top:16px;" disabled>
+            <i data-lucide="check-circle"></i> Place Order
+        </button>
+    </div>
+</div>
+
+<!-- ===================== ORDER SUCCESS ===================== -->
+<div id="order-success-overlay" class="order-success-overlay">
+    <div class="order-success-card">
+        <div class="success-checkmark">✅</div>
+        <h3>Order Placed!</h3>
+        <p>Your order has been received and will be delivered fresh tomorrow morning.</p>
+        <button class="btn-primary" id="btn-close-success">Continue Shopping</button>
+    </div>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<script src="js/app.js"></script>
+
+<!-- ═══ Service Worker Registration ════════════════════════════════════ -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('[PWA] Service Worker registered:', reg.scope))
+        .catch(err => console.warn('[PWA] SW registration failed:', err));
+    });
+  }
+</script>
+</body>
+</html>
