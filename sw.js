@@ -1,5 +1,5 @@
 // Shreeji Basket Service Worker
-const CACHE_NAME = 'shreeji-basket-v1';
+const CACHE_NAME = 'shreeji-basket-v2';
 const SHELL_ASSETS = [
   './',
   './index.html',

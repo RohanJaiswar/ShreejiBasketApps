@@ -184,6 +184,28 @@
             </div>
         </div>
 
+        <!-- Wallet tab content -->
+        <div id="tab-wallet" style="display:none;">
+            <div class="section-header mt8" style="padding-top:16px;">
+                <h4>Wallet Transactions</h4>
+            </div>
+            
+            <div class="wallet-summary" style="display:flex; gap:12px; padding: 0 16px; margin-bottom: 16px;">
+                <div class="summary-card" style="flex:1; background:var(--surface); padding:16px; border-radius:12px; border:1px solid var(--border); text-align:center;">
+                    <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Cash Collected</div>
+                    <div id="wallet-cash-total" style="font-size:18px; font-weight:700; color:var(--text);">₹0</div>
+                </div>
+                <div class="summary-card" style="flex:1; background:var(--surface); padding:16px; border-radius:12px; border:1px solid var(--border); text-align:center;">
+                    <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">UPI Collected</div>
+                    <div id="wallet-upi-total" style="font-size:18px; font-weight:700; color:var(--text);">₹0</div>
+                </div>
+            </div>
+
+            <div class="orders-content" id="transactions-list">
+                <div class="loading-products"><div class="spinner"></div>Loading transactions...</div>
+            </div>
+        </div>
+
         <!-- Profile tab content -->
         <div id="tab-profile" style="display:none;">
             <div style="padding: 16px 0 0;">

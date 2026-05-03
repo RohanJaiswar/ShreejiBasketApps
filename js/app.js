@@ -421,10 +421,83 @@ async function loadOrders() {
                 <div class="order-total">₹${parseFloat(o.total_amount || 0).toFixed(2)}</div>
             </div>`;
         }).join('');
-
     } catch (err) {
         console.error(err);
         list.innerHTML = '<div class="loading-products" style="color:var(--danger);">Failed to load orders.</div>';
+    }
+}
+
+// ── Load Wallet Transactions ───────────────────────────────────────────────────
+async function loadWalletTransactions() {
+    const list = document.getElementById('transactions-list');
+    if (!list) return;
+    list.innerHTML = '<div class="loading-products"><div class="spinner"></div>Loading transactions...</div>';
+
+    try {
+        let query = sb.from('transactions').select('*').order('created_at', { ascending: false }).limit(50);
+
+        // If vendor, filter by vendor_id
+        if (currentUser?.type === 'vendor' && currentUser?.id) {
+            query = query.eq('vendor_id', currentUser.id);
+        } else {
+            list.innerHTML = '<div class="loading-products">Wallet feature is for vendors.</div>';
+            return;
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        let cashTotal = 0;
+        let upiTotal = 0;
+
+        if (data) {
+            data.forEach(t => {
+                const amt = parseFloat(t.amount || 0);
+                if (t.payment_mode === 'cash') cashTotal += amt;
+                else if (t.payment_mode === 'upi') upiTotal += amt;
+            });
+        }
+
+        const cashTotalEl = document.getElementById('wallet-cash-total');
+        if (cashTotalEl) cashTotalEl.textContent = `₹${cashTotal.toFixed(0)}`;
+        
+        const upiTotalEl = document.getElementById('wallet-upi-total');
+        if (upiTotalEl) upiTotalEl.textContent = `₹${upiTotal.toFixed(0)}`;
+
+        if (!data || data.length === 0) {
+            list.innerHTML = '<div class="loading-products">No transactions found.</div>';
+            return;
+        }
+
+        list.innerHTML = data.map(t => {
+            const date = new Date(t.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+            const time = new Date(t.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+            const isUpi = t.payment_mode === 'upi';
+            const icon = isUpi ? 'smartphone' : 'banknote';
+            const paymentModeText = isUpi ? 'UPI' : 'Cash';
+            const deliveryPartner = t.delivery_partner_name || 'Delivery Partner';
+            
+            return `
+            <div class="order-card" style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <div style="font-weight:600; color:var(--text); margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+                        <i data-lucide="${icon}" style="width:16px;height:16px; color: ${isUpi ? 'var(--primary)' : 'var(--success)'};"></i>
+                        ${paymentModeText} Received
+                    </div>
+                    <div style="font-size:12px; color:var(--text-muted); margin-bottom:2px;">Received by: ${deliveryPartner}</div>
+                    <div style="font-size:11px; color:var(--text-muted);">${date} at ${time}</div>
+                    ${t.upi_ref ? `<div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Ref: ${t.upi_ref}</div>` : ''}
+                </div>
+                <div style="font-weight:700; font-size:16px; color:${isUpi ? 'var(--primary)' : 'var(--success)'};">
+                    +₹${parseFloat(t.amount || 0).toFixed(2)}
+                </div>
+            </div>`;
+        }).join('');
+        lucide.createIcons();
+
+    } catch (err) {
+        console.error(err);
+        list.innerHTML = '<div class="loading-products" style="color:var(--danger);">Failed to load transactions.</div>';
     }
 }
 
@@ -446,8 +519,9 @@ function initNav() {
             const target = document.getElementById(tabId);
             if (target) target.style.display = 'block';
 
-            // Lazy-load orders
+            // Lazy-load orders and transactions
             if (tabId === 'tab-orders') loadOrders();
+            if (tabId === 'tab-wallet') loadWalletTransactions();
         });
     });
 }
