@@ -1,314 +1,379 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shreeji Basket — Fresh Milk & Dairy</title>
-    <meta name="description" content="Shreeji Basket – Order fresh milk and dairy products from your trusted vendor.">
-
-    <!-- ═══ PWA / Install Meta Tags ══════════════════════════════════════ -->
+    <title>Shreeji Basket — Premium Milk Delivery</title>
+    <meta name="description" content="Order fresh milk and daily essentials.">
+    
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1a1a2e">
-    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#3b82f6">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="ShreejiBasket">
-    <meta name="application-name" content="Shreeji Basket">
+    <meta name="apple-mobile-web-app-title" content="Shreeji Basket">
 
-    <!-- ═══ Favicon & Apple Touch Icons ════════════════════════════════ -->
     <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png">
-    <link rel="shortcut icon" href="assets/icon-192.png">
     <link rel="apple-touch-icon" sizes="192x192" href="assets/icon-192.png">
-    <link rel="apple-touch-icon" sizes="512x512" href="assets/icon-512.png">
 
-    <!-- ═══ Open Graph / Rich Share Preview ════════════════════════════ -->
-    <meta property="og:title" content="Shreeji Basket – Fresh Dairy Daily">
-    <meta property="og:description" content="Order fresh milk and dairy products from your trusted vendor.">
-    <meta property="og:image" content="assets/icon-512.png">
-    <meta property="og:type" content="website">
-
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        },
+                        dark: {
+                            bg: '#0f172a',
+                            surface: '#1e293b',
+                            border: '#334155'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 40px -10px rgba(0,0,0,0.08)',
+                        'glow': '0 0 20px rgba(59, 130, 246, 0.5)',
+                    }
+                }
+            }
+        }
+    </script>
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body class="bg-slate-50 dark:bg-dark-bg text-slate-800 dark:text-slate-100 antialiased transition-colors duration-300 selection:bg-primary-500 selection:text-white pb-20 sm:pb-0 sm:flex sm:justify-center sm:items-center sm:h-screen sm:bg-slate-200 dark:sm:bg-slate-900">
 
-<!-- ===================== SPLASH SCREEN ===================== -->
-<div id="splash-screen" class="screen active">
-    <div class="splash-particles" id="splash-particles"></div>
-    <div class="logo-container">
-        <img src="assets/logo-shree.png" alt="Shreeji Logo" class="logo" onerror="this.style.display='none'">
-        <h1 class="splash-title">Shreeji Basket</h1>
-        <p class="splash-subtitle">Fresh Dairy, Daily</p>
-        <div class="splash-loader"><div class="splash-loader-bar"></div></div>
-    </div>
-</div>
+<!-- App Container for Desktop Preview -->
+<div id="app-container" class="w-full h-full sm:w-[400px] sm:h-[850px] sm:rounded-[40px] sm:overflow-hidden sm:shadow-2xl sm:border-[8px] sm:border-slate-800 relative bg-slate-50 dark:bg-dark-bg transition-colors duration-300 flex flex-col">
 
-<!-- ===================== LOGIN SCREEN ===================== -->
-<div id="login-screen" class="screen hidden">
-    <div class="login-container">
-        <div class="login-hero">
-            <img src="assets/logo-shree.png" alt="Shreeji Logo" class="login-logo" onerror="this.style.display='none'">
-            <h2>Welcome Back</h2>
-            <p>Sign in to your account</p>
+    <!-- ===================== SPLASH SCREEN ===================== -->
+    <div id="splash-screen" class="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-gradient-to-br from-blue-600 to-blue-800 dark:from-slate-800 dark:to-slate-900 transition-all duration-700 overflow-hidden">
+        
+        <!-- Logo and Title -->
+        <div class="relative z-10 mb-6 animate-fade-in-up">
+            <img src="assets/logo-shree.png" class="w-56 h-56 object-contain drop-shadow-2xl" onerror="this.src='assets/icon-head.jpeg'">
         </div>
-        <div class="login-body">
-            <div class="error-msg" id="login-error"></div>
-            <form id="login-form">
-                <div class="input-group">
-                    <label for="phone">Phone Number</label>
-                    <div class="input-wrap">
-                        <i data-lucide="phone"></i>
-                        <input type="tel" id="phone" placeholder="Enter your phone number" required>
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label for="password">Password</label>
-                    <div class="input-wrap">
-                        <i data-lucide="lock"></i>
-                        <input type="password" id="password" placeholder="Enter your password" required>
-                    </div>
-                </div>
-                <div class="options">
-                    <label><input type="checkbox"> Remember me</label>
-                    <a href="#" class="forgot-password">Forgot Password?</a>
-                </div>
-                <button type="submit" class="btn-primary" id="btn-customer-login">
-                    <i data-lucide="log-in"></i> Sign In
-                </button>
-            </form>
-            <div class="switch-link">
-                <p>Are you a vendor? <a href="#" id="vendor-login-link">Vendor Login</a></p>
-            </div>
+        <h1 class="text-4xl font-extrabold text-white tracking-tight animate-fade-in-up delay-100 z-10">Shreeji Basket</h1>
+        
+        <!-- Bottom Illustration -->
+        <div class="absolute bottom-0 left-0 right-0 z-0 animate-fade-in-up delay-100 transition-all duration-1000" style="-webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 30%); mask-image: linear-gradient(to bottom, transparent 0%, black 30%);">
+            <img src="assets/farm-illustration.png" class="w-full object-cover max-h-[40vh] sm:max-h-[300px] sm:rounded-b-[40px]" alt="Farm Illustration">
         </div>
     </div>
-</div>
 
-<!-- ===================== VENDOR LOGIN SCREEN ===================== -->
-<div id="vendor-login-screen" class="screen hidden">
-    <div class="login-container">
-        <div class="login-hero">
-            <img src="assets/logo-shree.png" alt="Shreeji Logo" class="login-logo" onerror="this.style.display='none'">
-            <h2>Vendor Portal</h2>
-            <p>Access your vendor dashboard</p>
+    <!-- ===================== LOGIN SCREEN ===================== -->
+    <div id="login-screen" class="hidden absolute inset-0 z-50 bg-slate-50 dark:bg-dark-bg flex-col overflow-y-auto">
+        <div class="h-64 bg-gradient-to-br from-blue-600 to-blue-800 dark:from-slate-800 dark:to-slate-900 rounded-b-[40px] p-8 flex flex-col justify-end relative overflow-hidden">
+            <div class="absolute top-[-50px] right-[-50px] w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
+            <img src="assets/logo-shree.png" class="w-16 h-16 mb-4 drop-shadow-lg filter brightness-0 invert" onerror="this.style.display='none'">
+            <h2 class="text-3xl font-extrabold text-white">Welcome Back</h2>
+            <p class="text-blue-100 mt-1">Sign in to manage your daily deliveries</p>
         </div>
-        <div class="login-body">
-            <div class="role-badge"><i data-lucide="store" style="width:14px;height:14px;"></i> Vendor Access</div>
-            <div class="error-msg" id="vendor-error"></div>
-            <form id="vendor-login-form">
-                <div class="input-group">
-                    <label for="vendor-username">Username</label>
-                    <div class="input-wrap">
-                        <i data-lucide="user"></i>
-                        <input type="text" id="vendor-username" placeholder="Enter your username" required autocomplete="username">
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label for="vendor-password">Password</label>
-                    <div class="input-wrap">
-                        <i data-lucide="lock"></i>
-                        <input type="password" id="vendor-password" placeholder="Enter your password" required autocomplete="current-password">
-                    </div>
-                </div>
-                <button type="submit" class="btn-primary" id="btn-vendor-login">
-                    <i data-lucide="log-in"></i> Vendor Sign In
-                </button>
-            </form>
-            <div class="switch-link">
-                <p>Not a vendor? <a href="#" id="customer-login-link">Customer Login</a></p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ===================== HOME SCREEN ===================== -->
-<div id="home-screen" class="screen hidden">
-    <!-- Header -->
-    <header class="app-header">
-        <div class="user-info">
-            <div class="avatar" id="user-avatar-initial">U</div>
-            <div class="greeting">
-                <p id="greeting-time">Good Morning,</p>
-                <h3 id="user-name-display">User</h3>
-            </div>
-        </div>
-        <div class="header-actions">
-            <button id="theme-toggle" class="icon-btn" title="Toggle Theme">
-                <i data-lucide="sun" id="theme-icon-light"></i>
-                <i data-lucide="moon" id="theme-icon-dark" style="display:none;"></i>
-            </button>
-            <button class="icon-btn cart-badge-btn" id="cart-btn" title="Cart">
-                <i data-lucide="shopping-cart"></i>
-                <span class="cart-count-badge" id="cart-count">0</span>
-            </button>
-        </div>
-    </header>
-
-    <!-- Scrollable content area -->
-    <div class="home-content" id="home-content">
-        <!-- Products tab content (default) -->
-        <div id="tab-home">
-            <div class="home-banner">
-                <h3>Fresh Every Morning 🥛</h3>
-                <p>Your daily dairy delivered fresh</p>
-                <span class="banner-store" id="banner-store-name">Shreeji Basket</span>
-            </div>
-
-            <!-- Category tabs -->
-            <div class="category-tabs" id="category-tabs">
-                <div class="cat-tab active" data-cat="all">All</div>
-            </div>
-
-            <div class="section-header">
-                <h4>Our Products</h4>
-            </div>
-
-            <!-- Products grid -->
-            <div class="products-grid" id="products-grid">
-                <div class="loading-products" style="grid-column:span 2">
-                    <div class="spinner"></div>
-                    Loading products...
-                </div>
-            </div>
-        </div>
-
-        <!-- Orders tab content -->
-        <div id="tab-orders" style="display:none;">
-            <div class="section-header mt8" style="padding-top:16px;">
-                <h4>My Orders</h4>
-            </div>
-            <div class="orders-content" id="orders-list">
-                <div class="loading-products"><div class="spinner"></div>Loading orders...</div>
-            </div>
-        </div>
-
-        <!-- Wallet tab content -->
-        <div id="tab-wallet" style="display:none;">
-            <div class="section-header mt8" style="padding-top:16px;">
-                <h4>Wallet Transactions</h4>
-            </div>
-            
-            <div class="wallet-summary" style="display:flex; gap:12px; padding: 0 16px; margin-bottom: 16px;">
-                <div class="summary-card" style="flex:1; background:var(--surface); padding:16px; border-radius:12px; border:1px solid var(--border); text-align:center;">
-                    <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Cash Collected</div>
-                    <div id="wallet-cash-total" style="font-size:18px; font-weight:700; color:var(--text);">₹0</div>
-                </div>
-                <div class="summary-card" style="flex:1; background:var(--surface); padding:16px; border-radius:12px; border:1px solid var(--border); text-align:center;">
-                    <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">UPI Collected</div>
-                    <div id="wallet-upi-total" style="font-size:18px; font-weight:700; color:var(--text);">₹0</div>
-                </div>
-            </div>
-
-            <div class="orders-content" id="transactions-list">
-                <div class="loading-products"><div class="spinner"></div>Loading transactions...</div>
-            </div>
-        </div>
-
-        <!-- Profile tab content -->
-        <div id="tab-profile" style="display:none;">
-            <div style="padding: 16px 0 0;">
-                <div class="profile-card">
-                    <div class="profile-avatar-lg" id="profile-avatar-lg">U</div>
-                    <h3 id="profile-name">User</h3>
-                    <p id="profile-store"></p>
-                    <span class="profile-badge" id="profile-role">Customer</span>
-                </div>
-                <div class="menu-list">
-                    <div class="menu-item">
-                        <div class="menu-item-icon"><i data-lucide="bell" style="width:18px;height:18px;"></i></div>
-                        <span class="menu-item-label">Notifications</span>
-                        <i data-lucide="chevron-right" class="chevron" style="width:16px;height:16px;"></i>
-                    </div>
-                    <div class="menu-item">
-                        <div class="menu-item-icon"><i data-lucide="map-pin" style="width:18px;height:18px;"></i></div>
-                        <span class="menu-item-label">Delivery Address</span>
-                        <i data-lucide="chevron-right" class="chevron" style="width:16px;height:16px;"></i>
-                    </div>
-                    <div class="menu-item">
-                        <div class="menu-item-icon"><i data-lucide="help-circle" style="width:18px;height:18px;"></i></div>
-                        <span class="menu-item-label">Help & Support</span>
-                        <i data-lucide="chevron-right" class="chevron" style="width:16px;height:16px;"></i>
-                    </div>
-                    <div class="menu-item" id="btn-logout" style="cursor:pointer;">
-                        <div class="menu-item-icon" style="background:rgba(239,68,68,0.1); color:var(--danger);">
-                            <i data-lucide="log-out" style="width:18px;height:18px;"></i>
+        <div class="flex-1 p-6 -mt-8">
+            <div class="bg-white dark:bg-dark-surface rounded-3xl shadow-soft p-6 border border-slate-100 dark:border-dark-border">
+                <div id="login-error" class="hidden bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-xl text-sm font-semibold mb-4 border border-red-100 dark:border-red-800/30"></div>
+                <form id="login-form" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Phone Number</label>
+                        <div class="relative">
+                            <i data-lucide="phone" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+                            <input type="tel" id="phone" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3.5 pl-12 pr-4 text-slate-800 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none" placeholder="Enter your mobile number" required>
                         </div>
-                        <span class="menu-item-label" style="color:var(--danger);">Logout</span>
-                        <i data-lucide="chevron-right" class="chevron" style="width:16px;height:16px;"></i>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Password</label>
+                        <div class="relative">
+                            <i data-lucide="lock" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+                            <input type="password" id="password" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3.5 pl-12 pr-4 text-slate-800 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none" placeholder="Enter password" required>
+                        </div>
+                    </div>
+                    <button type="submit" id="btn-customer-login" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-4 rounded-2xl shadow-[0_8px_20px_rgba(37,99,235,0.3)] transition-transform active:scale-[0.98] flex justify-center items-center gap-2">
+                        <span>Sign In</span> <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                    </button>
+                </form>
+            </div>
+            <div class="mt-8 text-center">
+                <button id="vendor-login-link" class="text-sm font-semibold text-primary-600 dark:text-primary-400 hover:underline">Are you a delivery partner? Login here</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vendor Login Screen -->
+    <div id="vendor-login-screen" class="hidden absolute inset-0 z-50 bg-slate-50 dark:bg-dark-bg flex-col overflow-y-auto">
+        <div class="h-64 bg-gradient-to-br from-slate-700 to-slate-900 rounded-b-[40px] p-8 flex flex-col justify-end relative overflow-hidden">
+            <h2 class="text-3xl font-extrabold text-white">Partner Portal</h2>
+            <p class="text-slate-300 mt-1">Manage your deliveries efficiently</p>
+        </div>
+        <div class="flex-1 p-6 -mt-8">
+            <div class="bg-white dark:bg-dark-surface rounded-3xl shadow-soft p-6 border border-slate-100 dark:border-dark-border">
+                <div class="inline-flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 dark:text-slate-300 mb-6 uppercase tracking-wider">
+                    <i data-lucide="truck" class="w-4 h-4"></i> Vendor Access
+                </div>
+                <div id="vendor-error" class="hidden bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-xl text-sm font-semibold mb-4 border border-red-100 dark:border-red-800/30"></div>
+                <form id="vendor-login-form" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Username</label>
+                        <div class="relative">
+                            <i data-lucide="user" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+                            <input type="text" id="vendor-username" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3.5 pl-12 pr-4 text-slate-800 dark:text-white focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all outline-none" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Password</label>
+                        <div class="relative">
+                            <i data-lucide="lock" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+                            <input type="password" id="vendor-password" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3.5 pl-12 pr-4 text-slate-800 dark:text-white focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all outline-none" required>
+                        </div>
+                    </div>
+                    <button type="submit" id="btn-vendor-login" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-lg transition-transform active:scale-[0.98]">
+                        Login to Dashboard
+                    </button>
+                </form>
+            </div>
+            <div class="mt-8 text-center">
+                <button id="customer-login-link" class="text-sm font-semibold text-slate-600 dark:text-slate-400 hover:underline">Back to Customer Login</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== MAIN APP SCREEN ===================== -->
+    <div id="home-screen" class="hidden flex-1 flex-col h-full overflow-hidden bg-slate-50 dark:bg-dark-bg">
+        
+        <!-- Premium Header -->
+        <header class="sticky top-0 z-40 bg-white/80 dark:bg-dark-surface/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-dark-border/50 px-5 py-3 transition-colors">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-center overflow-hidden shrink-0">
+                        <img src="assets/icon-head.jpeg" class="w-full h-full object-contain" onerror="this.src='assets/logo-shree.png'">
+                    </div>
+                    <div class="flex flex-col justify-center">
+                        <h2 class="font-extrabold text-[1.1rem] leading-tight text-slate-900 dark:text-white">Shreeji Basket</h2>
+                        <div class="flex items-center text-[11px] text-green-600 dark:text-green-400 font-bold mt-0.5 uppercase tracking-wide">
+                            <i data-lucide="map-pin" class="w-3.5 h-3.5 mr-1 shrink-0"></i> <span id="user-zone-display" class="truncate max-w-[120px]">Mumbai</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="theme-toggle" class="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                        <i data-lucide="moon" class="w-5 h-5 dark:hidden"></i>
+                        <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                    </button>
+                    <div class="relative">
+                        <button id="notif-btn" class="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                            <i data-lucide="bell" class="w-5 h-5"></i>
+                        </button>
+                        <span id="notif-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white dark:border-dark-surface hidden">0</span>
                     </div>
                 </div>
             </div>
-        </div>
+        </header>
+
+        <!-- Scrollable Body -->
+        <main class="flex-1 overflow-y-auto pb-24 scroll-smooth" id="main-content">
+            
+            <!-- HOME TAB -->
+            <div id="tab-home" class="animate-fade-in">
+                <!-- Slideshow Banner Section -->
+                <div class="px-4 pt-5 pb-2">
+                    <div class="relative rounded-3xl overflow-hidden shadow-soft">
+                        <div class="flex overflow-x-auto snap-x snap-mandatory no-scrollbar bg-slate-100 dark:bg-slate-800" id="banner-slides">
+                            <img src="banners/banner 1 .jpeg" class="w-full shrink-0 object-cover h-[180px] sm:h-[220px] snap-center" onerror="this.style.display='none'">
+                            <img src="banners/banner 2.jpeg" class="w-full shrink-0 object-cover h-[180px] sm:h-[220px] snap-center" onerror="this.style.display='none'">
+                            <img src="banners/banner 3.jpeg" class="w-full shrink-0 object-cover h-[180px] sm:h-[220px] snap-center" onerror="this.style.display='none'">
+                            <img src="banners/banner 4 .jpeg" class="w-full shrink-0 object-cover h-[180px] sm:h-[220px] snap-center" onerror="this.style.display='none'">
+                            <img src="banners/banner 5.jpeg" class="w-full shrink-0 object-cover h-[180px] sm:h-[220px] snap-center" onerror="this.style.display='none'">
+                        </div>
+                    </div>
+                    <!-- Dots -->
+                    <div class="flex justify-center gap-1.5 mt-3" id="banner-dots"></div>
+                </div>
+
+                <!-- Features / Trust Indicators -->
+                <div class="flex justify-between px-6 py-2">
+                    <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 rounded-2xl bg-green-50 dark:bg-green-900/20 text-green-600 flex items-center justify-center"><i data-lucide="leaf" class="w-5 h-5"></i></div><span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">100% Organic</span></div>
+                    <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center"><i data-lucide="truck" class="w-5 h-5"></i></div><span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Free Delivery</span></div>
+                    <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 rounded-2xl bg-purple-50 dark:bg-purple-900/20 text-purple-600 flex items-center justify-center"><i data-lucide="shield-check" class="w-5 h-5"></i></div><span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Pure Quality</span></div>
+                </div>
+
+                <!-- Categories -->
+                <div class="mt-6">
+                    <div class="px-5 mb-3 flex justify-between items-end">
+                        <h4 class="text-lg font-extrabold text-slate-900 dark:text-white">Shop by Category</h4>
+                    </div>
+                    <div class="flex overflow-x-auto px-5 pb-4 gap-4 no-scrollbar" id="category-tabs">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <!-- Products Grid -->
+                <div class="px-5 mt-2">
+                    <h4 class="text-lg font-extrabold text-slate-900 dark:text-white mb-4">Daily Essentials</h4>
+                    <div class="grid grid-cols-2 gap-4" id="products-grid">
+                        <!-- Loading State -->
+                        <div class="col-span-2 flex flex-col items-center justify-center py-10 text-slate-400">
+                            <i data-lucide="loader-2" class="w-8 h-8 animate-spin mb-2 text-primary-500"></i>
+                            <p class="text-sm font-medium">Loading fresh products...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ORDERS TAB -->
+            <div id="tab-orders" class="hidden animate-fade-in p-5">
+                <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white mb-6">Your Orders</h3>
+                <div id="orders-list" class="space-y-4">
+                    <!-- Loading state -->
+                </div>
+            </div>
+
+            <!-- WALLET TAB -->
+            <div id="tab-wallet" class="hidden animate-fade-in p-5">
+                <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white mb-6">Wallet Dashboard</h3>
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-3xl p-5 text-white shadow-lg">
+                        <p class="text-green-100 text-xs font-bold uppercase tracking-wider mb-1">Cash Collected</p>
+                        <h4 id="wallet-cash-total" class="text-2xl font-extrabold">₹0</h4>
+                    </div>
+                    <div class="bg-gradient-to-br from-blue-500 to-primary-600 rounded-3xl p-5 text-white shadow-lg">
+                        <p class="text-blue-100 text-xs font-bold uppercase tracking-wider mb-1">UPI Collected</p>
+                        <h4 id="wallet-upi-total" class="text-2xl font-extrabold">₹0</h4>
+                    </div>
+                </div>
+                <h4 class="text-lg font-bold text-slate-800 dark:text-white mb-4">Recent Transactions</h4>
+                <div id="transactions-list" class="space-y-3">
+                    <!-- Loading state -->
+                </div>
+            </div>
+
+            <!-- PROFILE TAB -->
+            <div id="tab-profile" class="hidden animate-fade-in">
+                <div class="bg-slate-900 text-white p-8 rounded-b-[40px] text-center shadow-lg relative overflow-hidden">
+                    <div class="absolute inset-0 opacity-20 bg-[url('assets/pattern.png')] mix-blend-overlay"></div>
+                    <div class="w-24 h-24 bg-gradient-to-br from-primary-400 to-primary-600 rounded-[28px] mx-auto flex items-center justify-center text-4xl font-extrabold shadow-glow relative z-10" id="profile-avatar-lg">U</div>
+                    <h3 class="text-2xl font-extrabold mt-4 relative z-10" id="profile-name">User Name</h3>
+                    <p class="text-slate-300 font-medium relative z-10" id="profile-store">Location</p>
+                    <span class="inline-block mt-3 px-4 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-bold uppercase tracking-wider relative z-10" id="profile-role">Customer</span>
+                </div>
+                <div class="p-5 mt-4 space-y-2">
+                    <button class="w-full flex items-center p-4 bg-white dark:bg-dark-surface rounded-2xl shadow-sm border border-slate-100 dark:border-dark-border active:scale-[0.98] transition-transform">
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-primary-500 flex items-center justify-center mr-4"><i data-lucide="map-pin" class="w-5 h-5"></i></div>
+                        <span class="flex-1 text-left font-bold text-slate-800 dark:text-slate-100">Delivery Address</span>
+                        <i data-lucide="chevron-right" class="w-5 h-5 text-slate-400"></i>
+                    </button>
+                    <button class="w-full flex items-center p-4 bg-white dark:bg-dark-surface rounded-2xl shadow-sm border border-slate-100 dark:border-dark-border active:scale-[0.98] transition-transform">
+                        <div class="w-10 h-10 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-500 flex items-center justify-center mr-4"><i data-lucide="help-circle" class="w-5 h-5"></i></div>
+                        <span class="flex-1 text-left font-bold text-slate-800 dark:text-slate-100">Help & Support</span>
+                        <i data-lucide="chevron-right" class="w-5 h-5 text-slate-400"></i>
+                    </button>
+                    <button id="btn-logout" class="w-full flex items-center p-4 bg-white dark:bg-dark-surface rounded-2xl shadow-sm border border-slate-100 dark:border-dark-border active:scale-[0.98] transition-transform mt-6">
+                        <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-500 flex items-center justify-center mr-4"><i data-lucide="log-out" class="w-5 h-5"></i></div>
+                        <span class="flex-1 text-left font-bold text-red-500">Logout</span>
+                        <i data-lucide="chevron-right" class="w-5 h-5 text-slate-400"></i>
+                    </button>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Premium Bottom Navigation -->
+        <nav class="absolute sm:relative bottom-0 w-full bg-white/90 dark:bg-dark-surface/90 backdrop-blur-xl border-t border-slate-200 dark:border-dark-border pb-safe pt-2 px-6 flex justify-between items-center z-40 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+            <a href="#" class="nav-item active flex flex-col items-center gap-1 p-2 text-slate-400 transition-colors" data-tab="tab-home">
+                <i data-lucide="home" class="w-6 h-6 mb-1 transition-transform"></i>
+                <span class="text-[10px] font-bold">Home</span>
+            </a>
+            <a href="#" class="nav-item flex flex-col items-center gap-1 p-2 text-slate-400 transition-colors" data-tab="tab-orders">
+                <i data-lucide="package" class="w-6 h-6 mb-1 transition-transform"></i>
+                <span class="text-[10px] font-bold">Orders</span>
+            </a>
+            <!-- Floating Cart Button -->
+            <div class="relative -top-6">
+                <button id="cart-btn" class="w-14 h-14 bg-primary-600 text-white rounded-full flex items-center justify-center shadow-[0_8px_20px_rgba(37,99,235,0.4)] active:scale-95 transition-transform border-4 border-slate-50 dark:border-dark-bg">
+                    <i data-lucide="shopping-cart" class="w-6 h-6"></i>
+                    <span id="cart-count" class="absolute top-0 right-0 w-5 h-5 bg-red-500 border-2 border-white text-white text-[10px] font-bold rounded-full flex items-center justify-center hidden">0</span>
+                </button>
+            </div>
+            <a href="#" class="nav-item flex flex-col items-center gap-1 p-2 text-slate-400 transition-colors" id="nav-wallet" data-tab="tab-wallet">
+                <i data-lucide="wallet" class="w-6 h-6 mb-1 transition-transform"></i>
+                <span class="text-[10px] font-bold">Wallet</span>
+            </a>
+            <a href="#" class="nav-item flex flex-col items-center gap-1 p-2 text-slate-400 transition-colors" data-tab="tab-profile">
+                <i data-lucide="user" class="w-6 h-6 mb-1 transition-transform"></i>
+                <span class="text-[10px] font-bold">Profile</span>
+            </a>
+        </nav>
     </div>
 
-    <!-- Bottom Nav -->
-    <nav class="bottom-nav">
-        <a href="#" class="nav-item active" id="nav-home" data-tab="tab-home">
-            <i data-lucide="home" class="nav-icon"></i>
-            <span>Home</span>
-        </a>
-        <a href="#" class="nav-item" id="nav-orders" data-tab="tab-orders">
-            <i data-lucide="package" class="nav-icon"></i>
-            <span>Orders</span>
-        </a>
-        <a href="#" class="nav-item" id="nav-wallet" data-tab="tab-wallet">
-            <i data-lucide="wallet" class="nav-icon"></i>
-            <span>Wallet</span>
-        </a>
-        <a href="#" class="nav-item" id="nav-profile" data-tab="tab-profile">
-            <i data-lucide="user" class="nav-icon"></i>
-            <span>Profile</span>
-        </a>
-    </nav>
-</div>
-
-<!-- ===================== CART SHEET (overlay on home) ===================== -->
-<div id="cart-overlay" class="order-success-overlay" style="align-items:flex-end; padding-bottom:0;">
-    <div class="cart-sheet">
-        <div class="cart-handle"></div>
-        <h3>Your Cart 🛒</h3>
-        <div class="cart-items" id="cart-items-list">
-            <div class="cart-empty">
-                <div class="cart-empty-icon">🛒</div>
-                <p>Your cart is empty</p>
+    <!-- Notification Modal -->
+    <div id="notif-modal" class="fixed inset-0 z-[200] bg-slate-900/40 backdrop-blur-sm hidden items-end sm:items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-white dark:bg-dark-surface w-full sm:w-96 max-h-[80vh] rounded-t-[32px] sm:rounded-[32px] shadow-2xl flex flex-col transform translate-y-full sm:translate-y-0 transition-transform duration-300 ease-out">
+            <div class="p-5 border-b border-slate-100 dark:border-dark-border flex justify-between items-center">
+                <h3 class="font-extrabold text-xl text-slate-900 dark:text-white">Notifications</h3>
+                <button id="close-notif" class="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:bg-slate-200 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="overflow-y-auto p-5 flex flex-col gap-4" id="notif-list">
+                <!-- Notifications populated here -->
             </div>
         </div>
-        <div class="cart-total-row">
-            <span>Total Amount</span>
-            <strong id="cart-total">₹0.00</strong>
+    </div>
+
+    <!-- Cart Sheet -->
+    <div id="cart-overlay" class="fixed inset-0 z-[300] bg-slate-900/40 backdrop-blur-sm hidden items-end justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-white dark:bg-dark-surface w-full sm:w-[400px] h-[85vh] rounded-t-[32px] shadow-2xl flex flex-col transform translate-y-full transition-transform duration-300 ease-out">
+            <div class="flex justify-center pt-3 pb-2"><div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full"></div></div>
+            <div class="px-6 py-2 border-b border-slate-100 dark:border-dark-border flex justify-between items-center">
+                <h3 class="font-extrabold text-xl text-slate-900 dark:text-white">Your Cart 🛒</h3>
+                <button id="close-cart-btn" class="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:bg-slate-200 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6" id="cart-items-list">
+                <!-- Cart items -->
+            </div>
+            <div class="p-6 border-t border-slate-100 dark:border-dark-border bg-slate-50 dark:bg-slate-800/50">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-slate-500 dark:text-slate-400 font-bold">Total Amount</span>
+                    <strong class="text-2xl font-extrabold text-slate-900 dark:text-white" id="cart-total">₹0.00</strong>
+                </div>
+                <button id="btn-place-order" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-4 rounded-2xl shadow-lg transition-transform active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 flex justify-center items-center gap-2">
+                    <i data-lucide="check-circle" class="w-5 h-5"></i> Place Order
+                </button>
+            </div>
         </div>
-        <button class="btn-primary" id="btn-place-order" style="margin-top:16px;" disabled>
-            <i data-lucide="check-circle"></i> Place Order
-        </button>
     </div>
-</div>
 
-<!-- ===================== ORDER SUCCESS ===================== -->
-<div id="order-success-overlay" class="order-success-overlay">
-    <div class="order-success-card">
-        <div class="success-checkmark">✅</div>
-        <h3>Order Placed!</h3>
-        <p>Your order has been received and will be delivered fresh tomorrow morning.</p>
-        <button class="btn-primary" id="btn-close-success">Continue Shopping</button>
+    <!-- Order Success -->
+    <div id="order-success-overlay" class="fixed inset-0 z-[400] bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-white dark:bg-dark-surface rounded-[32px] p-8 text-center max-w-[320px] w-[90%] transform scale-95 transition-transform duration-300 shadow-2xl">
+            <div class="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-5 text-green-500">
+                <i data-lucide="check" class="w-10 h-10"></i>
+            </div>
+            <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white mb-2">Order Placed!</h3>
+            <p class="text-slate-500 dark:text-slate-400 text-sm font-medium mb-6">Your fresh dairy will be delivered by 7:30 AM tomorrow morning.</p>
+            <button id="btn-close-success" class="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold py-3.5 rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Done</button>
+        </div>
     </div>
-</div>
 
-<!-- Toast notification -->
-<div class="toast" id="toast"></div>
+    <!-- Floating WhatsApp -->
+    <a href="#" class="absolute bottom-24 right-5 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-[0_8px_20px_rgba(37,211,102,0.4)] z-50 hover:scale-105 active:scale-95 transition-transform">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" class="w-8 h-8">
+    </a>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-28 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-5 py-3 rounded-full text-sm font-bold shadow-2xl z-[500] flex items-center gap-2 opacity-0 pointer-events-none transition-all duration-300 transform translate-y-4">
+        <span id="toast-msg"></span>
+    </div>
+
+</div>
 
 <script src="js/app.js"></script>
-
-<!-- ═══ Service Worker Registration ════════════════════════════════════ -->
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then(reg => console.log('[PWA] Service Worker registered:', reg.scope))
-        .catch(err => console.warn('[PWA] SW registration failed:', err));
-    });
-  }
-</script>
 </body>
 </html>

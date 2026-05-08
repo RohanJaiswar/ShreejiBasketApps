@@ -1,14 +1,11 @@
 /* ==========================================================================
-   SHREEJI BASKET — app.js
-   Supabase-powered: Vendor login, Product catalog, Cart, Orders
+   SHREEJI BASKET — app.js (Premium Redesign)
    ========================================================================== */
 
-// ── Supabase Init ────────────────────────────────────────────────────────────
 const SUPABASE_URL     = 'https://tqtvxtipqbnvyquljgtg.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_na3VEkRe9gb7Nysy5crL1g_oR-M2W9x';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ── Product emoji map by category keyword ───────────────────────────────────
 function productEmoji(category = '') {
     const c = category.toLowerCase();
     if (c.includes('paneer'))    return '🧀';
@@ -20,85 +17,61 @@ function productEmoji(category = '') {
     return '🥛';
 }
 
-// ── State ────────────────────────────────────────────────────────────────────
-let currentUser   = null; // { type: 'vendor'|'customer', ...vendorRow }
+let currentUser   = null;
 let allProducts   = [];
-let cart          = {}; // { productId: { product, qty } }
+let cart          = {}; 
 
-// ── DOM refs ─────────────────────────────────────────────────────────────────
 const splashScreen       = document.getElementById('splash-screen');
 const loginScreen        = document.getElementById('login-screen');
 const vendorLoginScreen  = document.getElementById('vendor-login-screen');
 const homeScreen         = document.getElementById('home-screen');
 
-// ── Utility: Show Screen ─────────────────────────────────────────────────────
+const mockNotifications = [
+    { id: 1, title: 'Order Confirmed', desc: 'Your fresh milk will arrive by 7:30 AM.', icon: 'check-circle', color: 'blue', read: false },
+    { id: 2, title: 'Special Discount', desc: 'Get 20% off on organic paneer today!', icon: 'tag', color: 'green', read: false }
+];
+
 function showScreen(screen) {
-    document.querySelectorAll('.screen').forEach(s => {
-        if (s !== screen) {
-            s.classList.remove('active');
-            setTimeout(() => { if (!s.classList.contains('active')) s.style.display = 'none'; }, 500);
+    [splashScreen, loginScreen, vendorLoginScreen, homeScreen].forEach(s => {
+        if (s && s !== screen) {
+            s.classList.add('hidden');
+            s.classList.remove('flex');
         }
     });
-    screen.style.display = 'flex';
-    setTimeout(() => screen.classList.add('active'), 30);
+    if(screen) {
+        screen.classList.remove('hidden');
+        screen.classList.add('flex');
+    }
 }
 
-// ── Utility: Toast ───────────────────────────────────────────────────────────
 function showToast(msg, duration = 2500) {
     const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), duration);
+    document.getElementById('toast-msg').innerHTML = msg;
+    t.classList.remove('opacity-0', 'translate-y-4');
+    setTimeout(() => t.classList.add('opacity-0', 'translate-y-4'), duration);
 }
 
-// ── Utility: Greeting ────────────────────────────────────────────────────────
-function greetingText() {
-    const h = new Date().getHours();
-    if (h < 12) return 'Good Morning,';
-    if (h < 17) return 'Good Afternoon,';
-    return 'Good Evening,';
-}
-
-// ── Utility: Show error under form ───────────────────────────────────────────
 function showFormError(id, msg) {
     const el = document.getElementById(id);
     if (!el) return;
     el.textContent = msg;
-    el.style.display = 'block';
+    el.classList.remove('hidden');
 }
 function clearFormError(id) {
     const el = document.getElementById(id);
-    if (el) el.style.display = 'none';
+    if (el) el.classList.add('hidden');
 }
 
-// ── Theme ────────────────────────────────────────────────────────────────────
 function applyTheme(theme) {
-    document.body.setAttribute('data-theme', theme);
-    const light = document.getElementById('theme-icon-light');
-    const dark  = document.getElementById('theme-icon-dark');
-    if (light) light.style.display = theme === 'dark' ? 'none' : 'block';
-    if (dark)  dark.style.display  = theme === 'dark' ? 'block' : 'none';
-    lucide.createIcons();
-}
-
-// ── Splash Particles ─────────────────────────────────────────────────────────
-function createParticles() {
-    const container = document.getElementById('splash-particles');
-    if (!container) return;
-    for (let i = 0; i < 18; i++) {
-        const s = document.createElement('span');
-        s.style.cssText = `
-            left: ${Math.random() * 100}%;
-            width: ${Math.random() * 4 + 2}px;
-            height: ${Math.random() * 4 + 2}px;
-            animation-duration: ${Math.random() * 8 + 6}s;
-            animation-delay: ${Math.random() * 5}s;
-        `;
-        container.appendChild(s);
+    const html = document.documentElement;
+    if (theme === 'dark') {
+        html.classList.add('dark');
+    } else {
+        html.classList.remove('dark');
     }
+    localStorage.setItem('theme', theme);
 }
 
-// ── Vendor Login (Supabase) ───────────────────────────────────────────────────
 async function handleVendorLogin(e) {
     e.preventDefault();
     clearFormError('vendor-error');
@@ -113,31 +86,21 @@ async function handleVendorLogin(e) {
     }
 
     const orig = btn.innerHTML;
-    btn.innerHTML = '<i data-lucide="loader" style="animation:spin 1s linear infinite;"></i> Signing in...';
+    btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto"></i>';
     btn.disabled = true;
     lucide.createIcons();
 
     try {
-        const { data, error } = await sb
-            .from('vendors')
-            .select('*')
-            .eq('username', username)
-            .eq('password', password)
-            .single();
-
+        const { data, error } = await sb.from('vendors').select('*').eq('username', username).eq('password', password).single();
         if (error || !data) {
-            showFormError('vendor-error', '❌ Invalid username or password.');
+            showFormError('vendor-error', 'Invalid username or password.');
             return;
         }
-
-        // Success — set session
         currentUser = { type: 'vendor', ...data };
         localStorage.setItem('shreeji_session', JSON.stringify(currentUser));
         enterHome();
-
     } catch (err) {
         showFormError('vendor-error', 'Connection error. Please retry.');
-        console.error(err);
     } finally {
         btn.innerHTML = orig;
         btn.disabled = false;
@@ -145,108 +108,155 @@ async function handleVendorLogin(e) {
     }
 }
 
-// ── Customer Login (basic — phone + any password) ────────────────────────────
 function handleCustomerLogin(e) {
     e.preventDefault();
     const phone = document.getElementById('phone').value.trim();
     if (!phone) { showFormError('login-error', 'Enter your phone number.'); return; }
-
     currentUser = { type: 'customer', phone, store_name: 'Customer', username: `User ${phone.slice(-4)}` };
     localStorage.setItem('shreeji_session', JSON.stringify(currentUser));
     enterHome();
 }
 
-// ── Enter Home Screen ─────────────────────────────────────────────────────────
 function enterHome() {
-    // Update header
     const name  = currentUser.store_name || currentUser.username || 'User';
     const initial = name.charAt(0).toUpperCase();
-    document.getElementById('user-name-display').textContent = name;
-    document.getElementById('user-avatar-initial').textContent = initial;
-    document.getElementById('greeting-time').textContent = greetingText();
-    document.getElementById('banner-store-name').textContent = name;
 
-    // Profile
-    document.getElementById('profile-name').textContent = name;
-    document.getElementById('profile-store').textContent = currentUser.zone || currentUser.phone || '';
-    document.getElementById('profile-role').textContent = currentUser.type === 'vendor' ? '🏪 Vendor' : '👤 Customer';
-    document.getElementById('profile-avatar-lg').textContent = initial;
+    const nameEl = document.getElementById('profile-name');
+    if (nameEl) nameEl.textContent = name;
+    
+    const storeEl = document.getElementById('profile-store');
+    if(storeEl) storeEl.textContent = currentUser.zone || currentUser.phone || '';
+    
+    const roleEl = document.getElementById('profile-role');
+    if(roleEl) roleEl.textContent = currentUser.type === 'vendor' ? 'Delivery Partner' : 'Customer';
+    
+    const avatarEl = document.getElementById('profile-avatar-lg');
+    if(avatarEl) avatarEl.textContent = initial;
+
+    const zoneEl = document.getElementById('user-zone-display');
+    if(zoneEl) zoneEl.textContent = currentUser.zone || 'Mumbai';
 
     showScreen(homeScreen);
     loadProducts();
+    updateNotifications();
     lucide.createIcons();
 }
 
-// ── Load Products ─────────────────────────────────────────────────────────────
 async function loadProducts() {
     const grid = document.getElementById('products-grid');
-    grid.innerHTML = '<div class="loading-products" style="grid-column:span 2"><div class="spinner"></div>Loading products...</div>';
+    grid.innerHTML = '<div class="col-span-2 flex flex-col items-center justify-center py-10 text-slate-400"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mb-2 text-primary-500"></i><p class="text-sm font-medium">Loading fresh products...</p></div>';
+    lucide.createIcons();
 
     try {
         const { data, error } = await sb.from('products').select('*').order('created_at', { ascending: false });
         if (error) throw error;
-
         allProducts = data || [];
         buildCategoryTabs();
         renderProducts('all');
-
     } catch (err) {
-        grid.innerHTML = '<div class="loading-products" style="grid-column:span 2; color:var(--danger);">Failed to load products. Please refresh.</div>';
-        console.error(err);
+        grid.innerHTML = '<div class="col-span-2 text-center text-red-500 py-4 font-bold">Failed to load products.</div>';
     }
 }
 
-// ── Build Category Tabs ───────────────────────────────────────────────────────
 function buildCategoryTabs() {
     const tabs = document.getElementById('category-tabs');
     const categories = ['all', ...new Set(allProducts.map(p => p.category))];
-    tabs.innerHTML = categories.map(cat => `
-        <div class="cat-tab ${cat === 'all' ? 'active' : ''}" data-cat="${cat}">
-            ${cat === 'all' ? 'All' : cat}
-        </div>`).join('');
+    
+    tabs.innerHTML = categories.map(cat => {
+        let label = cat === 'all' ? 'All' : cat;
+        return `
+        <div class="flex flex-col items-center gap-2 cursor-pointer min-w-[70px] group cat-tab-circle ${cat === 'all' ? 'active' : ''}" data-cat="${cat}">
+            <div class="w-16 h-16 rounded-[20px] bg-white dark:bg-dark-surface shadow-sm border-2 transition-all flex items-center justify-center text-3xl group-hover:border-primary-300 icon-box ${cat === 'all' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-transparent'}">
+                ${productEmoji(cat)}
+            </div>
+            <span class="text-xs font-bold transition-colors ${cat === 'all' ? 'text-primary-600 dark:text-primary-400' : 'text-slate-500 dark:text-slate-400'}">${label}</span>
+        </div>`;
+    }).join('');
 
-    tabs.querySelectorAll('.cat-tab').forEach(tab => {
+    tabs.querySelectorAll('.cat-tab-circle').forEach(tab => {
         tab.addEventListener('click', () => {
-            tabs.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+            tabs.querySelectorAll('.cat-tab-circle').forEach(t => {
+                t.classList.remove('active');
+                t.querySelector('.icon-box').classList.remove('border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
+                t.querySelector('.icon-box').classList.add('border-transparent');
+                t.querySelector('span').classList.remove('text-primary-600', 'dark:text-primary-400');
+                t.querySelector('span').classList.add('text-slate-500', 'dark:text-slate-400');
+            });
             tab.classList.add('active');
+            tab.querySelector('.icon-box').classList.remove('border-transparent');
+            tab.querySelector('.icon-box').classList.add('border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
+            tab.querySelector('span').classList.remove('text-slate-500', 'dark:text-slate-400');
+            tab.querySelector('span').classList.add('text-primary-600', 'dark:text-primary-400');
             renderProducts(tab.dataset.cat);
         });
     });
 }
 
-// ── Render Products Grid ───────────────────────────────────────────────────────
 function renderProducts(category) {
     const grid = document.getElementById('products-grid');
     const filtered = category === 'all' ? allProducts : allProducts.filter(p => p.category === category);
 
     if (!filtered.length) {
-        grid.innerHTML = '<div class="loading-products" style="grid-column:span 2;">No products found.</div>';
+        grid.innerHTML = '<div class="col-span-2 text-center text-slate-400 py-10 font-bold">No products found.</div>';
         return;
     }
 
     grid.innerHTML = filtered.map(p => {
         const qty = cart[p.id]?.qty || 0;
+        const imgUrl = p.image_url || 'assets/logo-shree.png';
+        const isNew = true; 
+
         return `
-        <div class="product-card" data-id="${p.id}">
-            <div class="product-card-img">${productEmoji(p.category)}</div>
-            <div class="product-card-body">
-                <div class="product-card-name">${p.product_name}</div>
-                <div class="product-card-weight">${p.unit_weight}</div>
-                <div class="product-card-footer">
-                    <span class="product-price">₹${parseFloat(p.base_price).toFixed(2)}</span>
-                    <div class="qty-control">
-                        <button class="qty-btn" onclick="changeQty('${p.id}', -1)">−</button>
-                        <span class="qty-display" id="qty_${p.id}">${qty}</span>
-                        <button class="qty-btn" onclick="changeQty('${p.id}', 1)">+</button>
-                    </div>
+        <div class="bg-white dark:bg-dark-surface rounded-3xl border border-slate-100 dark:border-dark-border shadow-sm overflow-hidden flex flex-col relative group transition-all duration-300" onclick="expandProduct('${p.id}')" data-id="${p.id}">
+            ${isNew ? '<div class="absolute top-2 left-2 bg-[#FEF3C7] text-[#D97706] text-[9px] font-extrabold uppercase tracking-wider px-2 py-1 rounded-lg z-10 shadow-sm">New</div>' : ''}
+            <div class="h-32 bg-slate-50 dark:bg-slate-800/50 p-4 relative flex items-center justify-center transition-all duration-300 product-img-container">
+                <img src="${imgUrl}" alt="${p.product_name}" class="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal transition-transform duration-300 group-hover:scale-110" onerror="this.src='assets/logo-shree.png'">
+                
+                <div id="qty-overlay-${p.id}" class="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-white dark:bg-dark-surface border border-slate-200 dark:border-dark-border rounded-xl shadow-lg flex items-center justify-between overflow-hidden min-w-[70px] h-9 transition-colors ${qty > 0 ? 'bg-primary-600 dark:bg-primary-600 border-primary-600' : ''}" onclick="event.stopPropagation()">
+                    ${qty > 0 ? `
+                        <button class="w-8 h-full flex items-center justify-center text-white font-bold active:bg-primary-700 transition-colors" onclick="changeQty('${p.id}', -1)">−</button>
+                        <span class="text-white font-bold text-sm w-4 text-center">${qty}</span>
+                        <button class="w-8 h-full flex items-center justify-center text-white font-bold active:bg-primary-700 transition-colors" onclick="changeQty('${p.id}', 1)">+</button>
+                    ` : `
+                        <button class="w-full h-full px-4 text-primary-600 dark:text-primary-400 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" onclick="changeQty('${p.id}', 1)">ADD</button>
+                    `}
+                </div>
+            </div>
+            <div class="p-4 pt-6 flex flex-col flex-1">
+                <div class="inline-block bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-bold px-2 py-0.5 rounded flex-start self-start mb-2 uppercase tracking-wider">${p.unit_weight}</div>
+                <div class="text-xs font-bold text-slate-800 dark:text-slate-100 leading-snug mb-3 line-clamp-2 product-name-display transition-all duration-300">${p.product_name}</div>
+                <div class="mt-auto flex justify-between items-center">
+                    <span class="font-extrabold text-slate-900 dark:text-white">₹${parseFloat(p.base_price).toFixed(2)}</span>
                 </div>
             </div>
         </div>`;
     }).join('');
 }
 
-// ── Cart Logic ────────────────────────────────────────────────────────────────
-function changeQty(productId, delta) {
+window.expandProduct = function(id) {
+    const card = document.querySelector(`div[data-id="${id}"]`);
+    if(card) {
+        const imgContainer = card.querySelector('.product-img-container');
+        const img = card.querySelector('img');
+        const title = card.querySelector('.product-name-display');
+        
+        if (card.classList.contains('expanded')) {
+            card.classList.remove('expanded');
+            imgContainer.classList.remove('h-48');
+            imgContainer.classList.add('h-32');
+            img.classList.remove('scale-125');
+            title.classList.add('line-clamp-2');
+        } else {
+            card.classList.add('expanded');
+            imgContainer.classList.remove('h-32');
+            imgContainer.classList.add('h-48');
+            img.classList.add('scale-125');
+            title.classList.remove('line-clamp-2');
+        }
+    }
+}
+
+window.changeQty = function(productId, delta) {
     const product = allProducts.find(p => p.id == productId);
     if (!product) return;
 
@@ -255,9 +265,23 @@ function changeQty(productId, delta) {
 
     if (cart[productId].qty === 0) delete cart[productId];
 
-    // Update display in grid
-    const qtyEl = document.getElementById(`qty_${productId}`);
-    if (qtyEl) qtyEl.textContent = cart[productId]?.qty || 0;
+    const overlay = document.getElementById(`qty-overlay-${productId}`);
+    if (overlay) {
+        const qty = cart[productId]?.qty || 0;
+        if (qty > 0) {
+            overlay.className = "absolute -bottom-4 left-1/2 -translate-x-1/2 bg-primary-600 border border-primary-600 rounded-xl shadow-lg flex items-center justify-between overflow-hidden min-w-[70px] h-9 transition-colors";
+            overlay.innerHTML = `
+                <button class="w-8 h-full flex items-center justify-center text-white font-bold active:bg-primary-700 transition-colors" onclick="changeQty('${productId}', -1)">−</button>
+                <span class="text-white font-bold text-sm w-4 text-center">${qty}</span>
+                <button class="w-8 h-full flex items-center justify-center text-white font-bold active:bg-primary-700 transition-colors" onclick="changeQty('${productId}', 1)">+</button>
+            `;
+        } else {
+            overlay.className = "absolute -bottom-4 left-1/2 -translate-x-1/2 bg-white dark:bg-dark-surface border border-slate-200 dark:border-dark-border rounded-xl shadow-lg flex items-center justify-between overflow-hidden min-w-[70px] h-9 transition-colors";
+            overlay.innerHTML = `
+                <button class="w-full h-full px-4 text-primary-600 dark:text-primary-400 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" onclick="changeQty('${productId}', 1)">ADD</button>
+            `;
+        }
+    }
 
     updateCartBadge();
 }
@@ -267,11 +291,11 @@ function updateCartBadge() {
     const badge = document.getElementById('cart-count');
     if (badge) {
         badge.textContent = totalItems;
-        badge.style.display = totalItems > 0 ? 'flex' : 'none';
+        if(totalItems > 0) badge.classList.remove('hidden');
+        else badge.classList.add('hidden');
     }
 }
 
-// ── Cart Sheet ────────────────────────────────────────────────────────────────
 function openCart() {
     const overlay = document.getElementById('cart-overlay');
     const itemsList = document.getElementById('cart-items-list');
@@ -280,7 +304,7 @@ function openCart() {
 
     const cartItems = Object.values(cart);
     if (cartItems.length === 0) {
-        itemsList.innerHTML = '<div class="cart-empty"><div class="cart-empty-icon">🛒</div><p>Your cart is empty. Add some products!</p></div>';
+        itemsList.innerHTML = '<div class="text-center py-10 text-slate-400"><i data-lucide="shopping-cart" class="w-12 h-12 mx-auto mb-3 opacity-50"></i><p class="font-bold">Your cart is empty</p></div>';
         totalEl.textContent = '₹0.00';
         placeBtn.disabled = true;
     } else {
@@ -289,49 +313,60 @@ function openCart() {
             const subtotal = parseFloat(product.base_price) * qty;
             total += subtotal;
             return `
-            <div class="cart-item">
-                <span class="cart-item-emoji">${productEmoji(product.category)}</span>
-                <div class="cart-item-info">
-                    <div class="cart-item-name">${product.product_name}</div>
-                    <div class="cart-item-meta">${product.unit_weight} × ${qty}</div>
+            <div class="flex items-center gap-4 py-4 border-b border-slate-100 dark:border-dark-border">
+                <div class="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">${productEmoji(product.category)}</div>
+                <div class="flex-1">
+                    <div class="text-sm font-bold text-slate-800 dark:text-slate-100">${product.product_name}</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">${product.unit_weight} × ${qty}</div>
                 </div>
-                <span class="cart-item-price">₹${subtotal.toFixed(2)}</span>
-                <button class="cart-item-remove" onclick="removeFromCart('${product.id}')">✕</button>
+                <div class="text-right">
+                    <div class="text-sm font-extrabold text-primary-600 dark:text-primary-400 mb-1">₹${subtotal.toFixed(2)}</div>
+                    <button class="text-[10px] uppercase font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded hover:bg-red-100 transition-colors" onclick="removeFromCart('${product.id}')">Remove</button>
+                </div>
             </div>`;
         }).join('');
         totalEl.textContent = `₹${total.toFixed(2)}`;
         placeBtn.disabled = false;
     }
 
-    overlay.classList.add('show');
-    overlay.style.display = 'flex';
+    overlay.classList.remove('hidden');
+    overlay.classList.add('flex');
+    setTimeout(() => {
+        overlay.classList.remove('opacity-0');
+        overlay.querySelector('div').classList.remove('translate-y-full');
+    }, 10);
     lucide.createIcons();
 }
 
 function closeCart() {
     const overlay = document.getElementById('cart-overlay');
-    overlay.classList.remove('show');
-    setTimeout(() => { overlay.style.display = 'none'; }, 300);
+    overlay.classList.add('opacity-0');
+    overlay.querySelector('div').classList.add('translate-y-full');
+    setTimeout(() => { 
+        overlay.classList.add('hidden');
+        overlay.classList.remove('flex');
+    }, 300);
 }
 
-function removeFromCart(productId) {
+window.removeFromCart = function(productId) {
     delete cart[productId];
     updateCartBadge();
-    openCart(); // refresh sheet
+    openCart(); 
 
-    // Also refresh qty in grid
-    const qtyEl = document.getElementById(`qty_${productId}`);
-    if (qtyEl) qtyEl.textContent = '0';
+    const overlay = document.getElementById(`qty-overlay-${productId}`);
+    if (overlay) {
+        overlay.className = "absolute -bottom-4 left-1/2 -translate-x-1/2 bg-white dark:bg-dark-surface border border-slate-200 dark:border-dark-border rounded-xl shadow-lg flex items-center justify-between overflow-hidden min-w-[70px] h-9 transition-colors";
+        overlay.innerHTML = `<button class="w-full h-full px-4 text-primary-600 dark:text-primary-400 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" onclick="changeQty('${productId}', 1)">ADD</button>`;
+    }
 }
 
-// ── Place Order (Supabase) ────────────────────────────────────────────────────
 async function placeOrder() {
     const cartItems = Object.values(cart);
     if (!cartItems.length) return;
 
     const btn = document.getElementById('btn-place-order');
     const orig = btn.innerHTML;
-    btn.innerHTML = '<i data-lucide="loader" style="animation:spin 1s linear infinite;"></i> Placing...';
+    btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Placing...';
     btn.disabled = true;
     lucide.createIcons();
 
@@ -362,19 +397,22 @@ async function placeOrder() {
         const { error } = await sb.from('orders').insert([orderData]);
         if (error) throw error;
 
-        // Success
         closeCart();
         cart = {};
         updateCartBadge();
-        renderProducts(document.querySelector('.cat-tab.active')?.dataset.cat || 'all');
+        renderProducts(document.querySelector('.cat-tab-circle.active')?.dataset.cat || 'all');
 
         const successOverlay = document.getElementById('order-success-overlay');
-        successOverlay.style.display = 'flex';
-        successOverlay.classList.add('show');
+        successOverlay.classList.remove('hidden');
+        successOverlay.classList.add('flex');
+        setTimeout(() => {
+            successOverlay.classList.remove('opacity-0');
+            successOverlay.querySelector('div').classList.remove('scale-95');
+            successOverlay.querySelector('div').classList.add('scale-100');
+        }, 10);
 
     } catch (err) {
-        console.error('Order error:', err);
-        showToast('❌ Failed to place order: ' + (err.message || 'Unknown error'));
+        showToast('❌ Failed to place order');
     } finally {
         btn.innerHTML = orig;
         btn.disabled = false;
@@ -382,15 +420,13 @@ async function placeOrder() {
     }
 }
 
-// ── Load Orders History ───────────────────────────────────────────────────────
 async function loadOrders() {
     const list = document.getElementById('orders-list');
-    list.innerHTML = '<div class="loading-products"><div class="spinner"></div>Loading orders...</div>';
+    list.innerHTML = '<div class="flex items-center justify-center py-10 text-slate-400"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mr-2"></i>Loading...</div>';
+    lucide.createIcons();
 
     try {
         let query = sb.from('orders').select('*').order('created_at', { ascending: false }).limit(30);
-
-        // If vendor, filter by vendor_id
         if (currentUser?.type === 'vendor' && currentUser?.id) {
             query = query.eq('vendor_id', currentUser.id);
         }
@@ -399,57 +435,54 @@ async function loadOrders() {
         if (error) throw error;
 
         if (!data || data.length === 0) {
-            list.innerHTML = '<div class="loading-products">No orders yet. Place your first order! 🛒</div>';
+            list.innerHTML = '<div class="bg-slate-50 dark:bg-dark-surface p-8 text-center rounded-3xl border border-slate-100 dark:border-dark-border text-slate-400 font-bold">No orders yet. Place your first order!</div>';
             return;
         }
 
         list.innerHTML = data.map(o => {
             const date = new Date(o.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-            const statusClass = o.status === 'delivered' ? 'status-delivered' : 'status-pending';
-            const statusLabel = o.status === 'delivered' ? '✅ Delivered' : '⏳ Pending';
+            const isDelivered = o.status === 'delivered';
+            const statusColor = isDelivered ? 'text-green-600 bg-green-50 dark:bg-green-900/20' : 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20';
+            const statusLabel = isDelivered ? 'Delivered' : 'Pending';
+            
             return `
-            <div class="order-card">
-                <div class="order-card-header">
+            <div class="bg-white dark:bg-dark-surface rounded-3xl p-5 border border-slate-100 dark:border-dark-border shadow-sm">
+                <div class="flex justify-between items-start mb-3">
                     <div>
-                        <div class="order-id">#ORD-${String(o.id || '').slice(0,8).toUpperCase()}</div>
-                        <div class="order-date">${date}</div>
+                        <div class="text-sm font-extrabold text-primary-600 dark:text-primary-400">#ORD-${String(o.id || '').slice(0,8).toUpperCase()}</div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">${date}</div>
                     </div>
-                    <span class="order-status ${statusClass}">${statusLabel}</span>
+                    <span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${statusColor}">${statusLabel}</span>
                 </div>
-                <div class="order-store-name">${o.vendor_name || 'Order'}</div>
-                <div class="order-items-summary">${o.items_summary || ''}</div>
-                <div class="order-total">₹${parseFloat(o.total_amount || 0).toFixed(2)}</div>
+                <div class="font-bold text-slate-800 dark:text-slate-100 mb-1">${o.vendor_name || 'Order'}</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed mb-3">${o.items_summary || ''}</div>
+                <div class="text-lg font-extrabold text-slate-900 dark:text-white">₹${parseFloat(o.total_amount || 0).toFixed(2)}</div>
             </div>`;
         }).join('');
     } catch (err) {
-        console.error(err);
-        list.innerHTML = '<div class="loading-products" style="color:var(--danger);">Failed to load orders.</div>';
+        list.innerHTML = '<div class="text-red-500 font-bold text-center py-4">Failed to load orders.</div>';
     }
 }
 
-// ── Load Wallet Transactions ───────────────────────────────────────────────────
 async function loadWalletTransactions() {
     const list = document.getElementById('transactions-list');
     if (!list) return;
-    list.innerHTML = '<div class="loading-products"><div class="spinner"></div>Loading transactions...</div>';
+    list.innerHTML = '<div class="flex items-center justify-center py-10 text-slate-400"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mr-2"></i>Loading...</div>';
+    lucide.createIcons();
 
     try {
         let query = sb.from('transactions').select('*').order('created_at', { ascending: false }).limit(50);
-
-        // If vendor, filter by vendor_id
         if (currentUser?.type === 'vendor' && currentUser?.id) {
             query = query.eq('vendor_id', currentUser.id);
         } else {
-            list.innerHTML = '<div class="loading-products">Wallet feature is for vendors.</div>';
+            list.innerHTML = '<div class="bg-slate-50 dark:bg-dark-surface p-8 text-center rounded-3xl border border-slate-100 dark:border-dark-border text-slate-400 font-bold">Wallet feature is for vendors.</div>';
             return;
         }
 
         const { data, error } = await query;
         if (error) throw error;
 
-        let cashTotal = 0;
-        let upiTotal = 0;
-
+        let cashTotal = 0, upiTotal = 0;
         if (data) {
             data.forEach(t => {
                 const amt = parseFloat(t.amount || 0);
@@ -457,15 +490,11 @@ async function loadWalletTransactions() {
                 else if (t.payment_mode === 'upi') upiTotal += amt;
             });
         }
-
-        const cashTotalEl = document.getElementById('wallet-cash-total');
-        if (cashTotalEl) cashTotalEl.textContent = `₹${cashTotal.toFixed(0)}`;
-        
-        const upiTotalEl = document.getElementById('wallet-upi-total');
-        if (upiTotalEl) upiTotalEl.textContent = `₹${upiTotal.toFixed(0)}`;
+        document.getElementById('wallet-cash-total').textContent = `₹${cashTotal.toFixed(0)}`;
+        document.getElementById('wallet-upi-total').textContent = `₹${upiTotal.toFixed(0)}`;
 
         if (!data || data.length === 0) {
-            list.innerHTML = '<div class="loading-products">No transactions found.</div>';
+            list.innerHTML = '<div class="text-center text-slate-400 font-bold py-4">No transactions found.</div>';
             return;
         }
 
@@ -474,59 +503,120 @@ async function loadWalletTransactions() {
             const time = new Date(t.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
             const isUpi = t.payment_mode === 'upi';
             const icon = isUpi ? 'smartphone' : 'banknote';
-            const paymentModeText = isUpi ? 'UPI' : 'Cash';
-            const deliveryPartner = t.delivery_partner_name || 'Delivery Partner';
+            const color = isUpi ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'text-green-500 bg-green-50 dark:bg-green-900/20';
+            const amtColor = isUpi ? 'text-primary-600 dark:text-primary-400' : 'text-green-600 dark:text-green-400';
             
             return `
-            <div class="order-card" style="display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <div style="font-weight:600; color:var(--text); margin-bottom:4px; display:flex; align-items:center; gap:6px;">
-                        <i data-lucide="${icon}" style="width:16px;height:16px; color: ${isUpi ? 'var(--primary)' : 'var(--success)'};"></i>
-                        ${paymentModeText} Received
-                    </div>
-                    <div style="font-size:12px; color:var(--text-muted); margin-bottom:2px;">Received by: ${deliveryPartner}</div>
-                    <div style="font-size:11px; color:var(--text-muted);">${date} at ${time}</div>
-                    ${t.upi_ref ? `<div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Ref: ${t.upi_ref}</div>` : ''}
+            <div class="bg-white dark:bg-dark-surface rounded-2xl p-4 border border-slate-100 dark:border-dark-border shadow-sm flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${color}">
+                    <i data-lucide="${icon}" class="w-6 h-6"></i>
                 </div>
-                <div style="font-weight:700; font-size:16px; color:${isUpi ? 'var(--primary)' : 'var(--success)'};">
-                    +₹${parseFloat(t.amount || 0).toFixed(2)}
+                <div class="flex-1">
+                    <div class="font-bold text-slate-800 dark:text-slate-100">${isUpi ? 'UPI' : 'Cash'} Received</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400">${date} at ${time}</div>
+                    ${t.upi_ref ? `<div class="text-[10px] text-slate-400 font-mono mt-0.5">Ref: ${t.upi_ref}</div>` : ''}
                 </div>
+                <div class="text-lg font-extrabold ${amtColor}">+₹${parseFloat(t.amount || 0).toFixed(2)}</div>
             </div>`;
         }).join('');
         lucide.createIcons();
 
     } catch (err) {
-        console.error(err);
-        list.innerHTML = '<div class="loading-products" style="color:var(--danger);">Failed to load transactions.</div>';
+        list.innerHTML = '<div class="text-red-500 font-bold text-center py-4">Failed to load transactions.</div>';
     }
 }
 
-// ── Bottom Nav Tabs ───────────────────────────────────────────────────────────
+function updateNotifications() {
+    const list = document.getElementById('notif-list');
+    const badge = document.getElementById('notif-badge');
+    const unread = mockNotifications.filter(n => !n.read).length;
+
+    if(unread > 0) {
+        badge.textContent = unread;
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+
+    if(mockNotifications.length === 0) {
+        list.innerHTML = '<div class="text-center text-slate-400 py-6 font-bold">No new notifications</div>';
+        return;
+    }
+
+    list.innerHTML = mockNotifications.map(n => {
+        let colorClasses = '';
+        if(n.color === 'blue') colorClasses = 'bg-blue-50 dark:bg-blue-900/20 text-blue-500 border-blue-100 dark:border-blue-800/30';
+        if(n.color === 'green') colorClasses = 'bg-green-50 dark:bg-green-900/20 text-green-500 border-green-100 dark:border-green-800/30';
+        
+        return `
+        <div class="flex gap-3 p-4 bg-white dark:bg-dark-surface rounded-2xl border ${n.read ? 'border-slate-100 dark:border-dark-border opacity-70' : 'border-primary-100 dark:border-primary-900 shadow-sm'} cursor-pointer" onclick="markRead(${n.id})">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 border ${colorClasses}">
+                <i data-lucide="${n.icon}" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <h4 class="text-sm font-bold text-slate-800 dark:text-slate-100">${n.title}</h4>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">${n.desc}</p>
+            </div>
+        </div>
+        `;
+    }).join('');
+    lucide.createIcons();
+}
+
+window.markRead = function(id) {
+    const n = mockNotifications.find(x => x.id === id);
+    if(n) n.read = true;
+    updateNotifications();
+}
+
+function openNotif() {
+    const modal = document.getElementById('notif-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modal.querySelector('div').classList.remove('translate-y-full');
+    }, 10);
+}
+
+function closeNotif() {
+    const modal = document.getElementById('notif-modal');
+    modal.classList.add('opacity-0');
+    modal.querySelector('div').classList.add('translate-y-full');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }, 300);
+}
+
+
 function initNav() {
-    const navItems = document.querySelectorAll('.nav-item[data-tab]');
+    const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
         item.addEventListener('click', e => {
             e.preventDefault();
             const tabId = item.dataset.tab;
 
-            navItems.forEach(n => n.classList.remove('active'));
-            item.classList.add('active');
+            navItems.forEach(n => {
+                n.classList.remove('active', 'text-primary-600', 'dark:text-primary-400');
+                n.classList.add('text-slate-400');
+            });
+            item.classList.add('active', 'text-primary-600', 'dark:text-primary-400');
+            item.classList.remove('text-slate-400');
 
-            document.querySelectorAll('#home-content > div[id^="tab-"]').forEach(tab => {
-                tab.style.display = 'none';
+            document.querySelectorAll('#main-content > div[id^="tab-"]').forEach(tab => {
+                tab.classList.add('hidden');
             });
 
             const target = document.getElementById(tabId);
-            if (target) target.style.display = 'block';
+            if (target) target.classList.remove('hidden');
 
-            // Lazy-load orders and transactions
             if (tabId === 'tab-orders') loadOrders();
             if (tabId === 'tab-wallet') loadWalletTransactions();
         });
     });
 }
 
-// ── Restore Session ───────────────────────────────────────────────────────────
 function restoreSession() {
     try {
         const saved = localStorage.getItem('shreeji_session');
@@ -538,45 +628,34 @@ function restoreSession() {
     return false;
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    // Particles
-    createParticles();
-
-    // Theme
     const savedTheme = localStorage.getItem('theme') || 'light';
     applyTheme(savedTheme);
 
-    // Theme toggle
     const themeToggle = document.getElementById('theme-toggle');
     if (themeToggle) {
         themeToggle.addEventListener('click', () => {
-            const cur = document.body.getAttribute('data-theme');
-            const next = cur === 'dark' ? 'light' : 'dark';
-            applyTheme(next);
-            localStorage.setItem('theme', next);
+            const isDark = document.documentElement.classList.contains('dark');
+            applyTheme(isDark ? 'light' : 'dark');
         });
     }
 
-    // Icons
     lucide.createIcons();
 
-    // ── Splash → Login ────────────────────────────────────────────────────
     setTimeout(() => {
-        if (restoreSession()) {
-            enterHome();
-        } else {
-            showScreen(loginScreen);
-        }
-    }, 5000);
+        splashScreen.classList.add('opacity-0');
+        setTimeout(() => {
+            if (restoreSession()) {
+                enterHome();
+            } else {
+                showScreen(loginScreen);
+            }
+        }, 700);
+    }, 2000);
 
-    // ── Login Form ────────────────────────────────────────────────────────
     document.getElementById('login-form').addEventListener('submit', handleCustomerLogin);
-
-    // ── Vendor Login Form ─────────────────────────────────────────────────
     document.getElementById('vendor-login-form').addEventListener('submit', handleVendorLogin);
 
-    // ── Switch between login screens ──────────────────────────────────────
     document.getElementById('vendor-login-link').addEventListener('click', e => {
         e.preventDefault();
         clearFormError('vendor-error');
@@ -588,25 +667,24 @@ document.addEventListener('DOMContentLoaded', () => {
         showScreen(loginScreen);
     });
 
-    // ── Cart ──────────────────────────────────────────────────────────────
     document.getElementById('cart-btn').addEventListener('click', openCart);
-
-    // Close cart by clicking overlay background
+    document.getElementById('close-cart-btn').addEventListener('click', closeCart);
     document.getElementById('cart-overlay').addEventListener('click', e => {
         if (e.target === document.getElementById('cart-overlay')) closeCart();
     });
 
-    // Place Order
     document.getElementById('btn-place-order').addEventListener('click', placeOrder);
-
-    // Close success
     document.getElementById('btn-close-success').addEventListener('click', () => {
         const ov = document.getElementById('order-success-overlay');
-        ov.classList.remove('show');
-        setTimeout(() => { ov.style.display = 'none'; }, 300);
+        ov.classList.add('opacity-0');
+        ov.querySelector('div').classList.remove('scale-100');
+        ov.querySelector('div').classList.add('scale-95');
+        setTimeout(() => { 
+            ov.classList.add('hidden');
+            ov.classList.remove('flex');
+        }, 300);
     });
 
-    // ── Logout ────────────────────────────────────────────────────────────
     document.getElementById('btn-logout').addEventListener('click', () => {
         if (confirm('Are you sure you want to logout?')) {
             currentUser = null;
@@ -616,6 +694,72 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ── Nav Tabs ──────────────────────────────────────────────────────────
+    document.getElementById('notif-btn').addEventListener('click', openNotif);
+    document.getElementById('close-notif').addEventListener('click', closeNotif);
+    document.getElementById('notif-modal').addEventListener('click', e => {
+        if(e.target === document.getElementById('notif-modal')) closeNotif();
+    });
+
+    // ── Banner Slideshow Sync & Auto-scroll ─────────────────────────────────────────────
+    const slidesWrapper = document.getElementById('banner-slides');
+    const dotsContainer = document.getElementById('banner-dots');
+    if (slidesWrapper && dotsContainer) {
+        const slides = slidesWrapper.querySelectorAll('img');
+        const numSlides = slides.length;
+        
+        slides.forEach((_, i) => {
+            const dot = document.createElement('div');
+            dot.className = i === 0 ? 'w-4 h-1.5 rounded-full bg-primary-600 dark:bg-primary-400 transition-all' : 'w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 transition-all';
+            dotsContainer.appendChild(dot);
+        });
+        const dots = dotsContainer.querySelectorAll('div');
+        
+        let currentIndex = 0;
+        let slideInterval;
+
+        const updateDots = (index) => {
+            dots.forEach((dot, i) => {
+                if (i === index) {
+                    dot.className = 'w-4 h-1.5 rounded-full bg-primary-600 dark:bg-primary-400 transition-all';
+                } else {
+                    dot.className = 'w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 transition-all';
+                }
+            });
+        };
+
+        slidesWrapper.addEventListener('scroll', () => {
+            const scrollLeft = slidesWrapper.scrollLeft;
+            const slideWidth = slidesWrapper.clientWidth;
+            currentIndex = Math.round(scrollLeft / slideWidth);
+            updateDots(currentIndex);
+        });
+
+        // Auto-scroll logic
+        const startSlideShow = () => {
+            slideInterval = setInterval(() => {
+                currentIndex = (currentIndex + 1) % numSlides;
+                slidesWrapper.scrollTo({
+                    left: currentIndex * slidesWrapper.clientWidth,
+                    behavior: 'smooth'
+                });
+            }, 3000); // Change poster every 3 seconds
+        };
+
+        const stopSlideShow = () => {
+            clearInterval(slideInterval);
+        };
+
+        // Start initially
+        if (numSlides > 1) {
+            startSlideShow();
+            
+            // Pause on interaction
+            slidesWrapper.addEventListener('touchstart', stopSlideShow);
+            slidesWrapper.addEventListener('touchend', startSlideShow);
+            slidesWrapper.addEventListener('mouseenter', stopSlideShow);
+            slidesWrapper.addEventListener('mouseleave', startSlideShow);
+        }
+    }
+
     initNav();
 });
