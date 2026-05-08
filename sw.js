@@ -1,5 +1,5 @@
 // Shreeji Basket Service Worker
-const CACHE_NAME = 'shreeji-basket-v2';
+const CACHE_NAME = 'shreeji-basket-v3';
 const SHELL_ASSETS = [
   './',
   './index.html',
@@ -7,10 +7,13 @@ const SHELL_ASSETS = [
   './js/app.js',
   './manifest.json',
   './assets/logo-shree.png',
+  './assets/icon-head.jpeg',
+  './assets/farm-illustration.png',
   './assets/icon-192.png',
   './assets/icon-512.png',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
-  'https://unpkg.com/lucide@latest'
+  'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap',
+  'https://unpkg.com/lucide@latest',
+  'https://cdn.tailwindcss.com'
 ];
 
 // ── Install: pre-cache shell ──────────────────────────────────────────────────
