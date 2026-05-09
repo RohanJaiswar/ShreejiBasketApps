@@ -9,14 +9,14 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ── Firebase / FCM Config ───────────────────────────────────────────────────
 // REPLACE all "YOUR_*" values with your actual Firebase project config
 const FIREBASE_CONFIG = {
-    apiKey:            "YOUR_API_KEY",
-    authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId:         "YOUR_PROJECT_ID",
-    storageBucket:     "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId:             "YOUR_APP_ID"
+    apiKey:            "AIzaSyC-_AegH7AFgFa3csz8v4NoXUCWouwm3Mc",
+    authDomain:        "shreejibasket-ad367.firebaseapp.com",
+    projectId:         "shreejibasket-ad367",
+    storageBucket:     "shreejibasket-ad367.firebasestorage.app",
+    messagingSenderId: "423656892911",
+    appId:             "1:423656892911:android:281b33799dfd393e2fae1a"
 };
-const FCM_VAPID_KEY = "YOUR_VAPID_KEY"; // from Firebase Console → Project Settings → Cloud Messaging
+const FCM_VAPID_KEY = "BFAAKwLXVHax15ehmx7ccMXAZDVltUl7FzKs57GhYf4-jWW41U7ns3w8bR2C6Q0DNREQ9RnZ2Ki6CTXEJi7DDls"; // from Firebase Console → Project Settings → Cloud Messaging
 // ────────────────────────────────────────────────────────────────────────────
 
 // Initialize Firebase (only if the SDK is loaded — loaded via <script> in index.html)
