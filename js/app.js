@@ -22,7 +22,7 @@ let allProducts   = [];
 let cart          = {}; 
 
 const splashScreen       = document.getElementById('splash-screen');
-const loginScreen        = document.getElementById('login-screen');
+const registerScreen     = document.getElementById('register-screen');
 const vendorLoginScreen  = document.getElementById('vendor-login-screen');
 const homeScreen         = document.getElementById('home-screen');
 
@@ -32,7 +32,7 @@ const mockNotifications = [
 ];
 
 function showScreen(screen) {
-    [splashScreen, loginScreen, vendorLoginScreen, homeScreen].forEach(s => {
+    [splashScreen, registerScreen, vendorLoginScreen, homeScreen].forEach(s => {
         if (s && s !== screen) {
             s.classList.add('hidden');
             s.classList.remove('flex');
@@ -108,13 +108,77 @@ async function handleVendorLogin(e) {
     }
 }
 
-function handleCustomerLogin(e) {
+async function handleVendorRegister(e) {
     e.preventDefault();
-    const phone = document.getElementById('phone').value.trim();
-    if (!phone) { showFormError('login-error', 'Enter your phone number.'); return; }
-    currentUser = { type: 'customer', phone, store_name: 'Customer', username: `User ${phone.slice(-4)}` };
-    localStorage.setItem('shreeji_session', JSON.stringify(currentUser));
-    enterHome();
+    clearFormError('register-error');
+
+    const storeName = document.getElementById('reg-store-name').value.trim();
+    const username  = document.getElementById('reg-username').value.trim();
+    const phone     = document.getElementById('reg-phone').value.trim();
+    const zone      = document.getElementById('reg-zone').value.trim();
+    const address   = document.getElementById('reg-address').value.trim();
+    const password  = document.getElementById('reg-password').value;
+    const btn       = document.getElementById('btn-register');
+
+    if (!storeName || !username || !phone || !zone || !address || !password) {
+        showFormError('register-error', 'Please fill in all fields.');
+        return;
+    }
+    if (!/^[0-9]{10}$/.test(phone)) {
+        showFormError('register-error', 'Enter a valid 10-digit phone number.');
+        return;
+    }
+    if (password.length < 4) {
+        showFormError('register-error', 'Password must be at least 4 characters.');
+        return;
+    }
+
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> <span>Registering...</span>';
+    btn.disabled = true;
+    lucide.createIcons();
+
+    try {
+        // Check if username already exists
+        const { data: existing } = await sb.from('vendors').select('id').eq('username', username).maybeSingle();
+        if (existing) {
+            showFormError('register-error', 'Username already taken. Please choose another.');
+            return;
+        }
+
+        const { data, error } = await sb.from('vendors').insert([{
+            store_name: storeName,
+            username,
+            phone_number: phone,
+            zone,
+            address,
+            password,
+            containers_balance: 0
+        }]).select().single();
+
+        if (error) throw error;
+
+        // Show success and auto-navigate to login
+        const successEl = document.getElementById('register-success');
+        if (successEl) {
+            successEl.textContent = '✅ Registration successful! You can now login.';
+            successEl.classList.remove('hidden');
+        }
+        document.getElementById('register-form').reset();
+
+        setTimeout(() => {
+            successEl && successEl.classList.add('hidden');
+            clearFormError('vendor-error');
+            showScreen(vendorLoginScreen);
+        }, 2000);
+
+    } catch (err) {
+        showFormError('register-error', 'Registration failed. Please try again.');
+    } finally {
+        btn.innerHTML = orig;
+        btn.disabled = false;
+        lucide.createIcons();
+    }
 }
 
 function enterHome() {
@@ -398,27 +462,50 @@ async function placeOrder() {
         if (error) throw error;
 
         // ── Outstanding Container Tracking ──────────────────────────────────
-        // For each cart item whose product has container = true,
-        // add that item's quantity to the vendor's outstanding_containers count.
+        // For each cart item whose product has container = true (any truthy value),
+        // add that item's quantity to the vendor's containers_balance count.
         if (currentUser.type === 'vendor' && currentUser.id) {
             const containerQty = cartItems.reduce((sum, { product, qty }) => {
-                return sum + (product.container === true ? qty : 0);
+                // Check 'includes_container' (actual DB column) as well as fallback 'container'
+                return sum + ((!!product.includes_container || !!product.container) ? qty : 0);
             }, 0);
 
-            if (containerQty > 0) {
-                // Fetch current value, then increment
-                const { data: vendorData, error: fetchErr } = await sb
-                    .from('vendors')
-                    .select('outstanding_containers')
-                    .eq('id', currentUser.id)
-                    .single();
+            console.log('[Containers] containerQty to add:', containerQty, 
+                'Cart products:', cartItems.map(i => ({ name: i.product.product_name, container: i.product.container, qty: i.qty }))
+            );
 
-                if (!fetchErr && vendorData) {
-                    const current = vendorData.outstanding_containers || 0;
-                    await sb
+            if (containerQty > 0) {
+                try {
+                    // Fetch current value fresh from DB
+                    const { data: vendorData, error: fetchErr } = await sb
                         .from('vendors')
-                        .update({ outstanding_containers: current + containerQty })
-                        .eq('id', currentUser.id);
+                        .select('containers_balance')
+                        .eq('id', currentUser.id)
+                        .single();
+
+                    if (fetchErr) {
+                        console.error('[Containers] Fetch error:', fetchErr);
+                    } else if (vendorData) {
+                        const current = vendorData.containers_balance || 0;
+                        const newTotal = current + containerQty;
+
+                        const { error: updateErr } = await sb
+                            .from('vendors')
+                            .update({ containers_balance: newTotal })
+                            .eq('id', currentUser.id);
+
+                        if (updateErr) {
+                            console.error('[Containers] Update error:', updateErr);
+                            showToast('⚠️ Order placed but container count update failed.');
+                        } else {
+                            // Keep in-memory session in sync
+                            currentUser.containers_balance = newTotal;
+                            localStorage.setItem('shreeji_session', JSON.stringify(currentUser));
+                            console.log('[Containers] Updated to:', newTotal);
+                        }
+                    }
+                } catch (containerErr) {
+                    console.error('[Containers] Unexpected error:', containerErr);
                 }
             }
         }
@@ -675,23 +762,27 @@ document.addEventListener('DOMContentLoaded', () => {
             if (restoreSession()) {
                 enterHome();
             } else {
-                showScreen(loginScreen);
+                showScreen(vendorLoginScreen);
             }
         }, 700);
     }, 2000);
 
-    document.getElementById('login-form').addEventListener('submit', handleCustomerLogin);
     document.getElementById('vendor-login-form').addEventListener('submit', handleVendorLogin);
+    document.getElementById('register-form').addEventListener('submit', handleVendorRegister);
 
-    document.getElementById('vendor-login-link').addEventListener('click', e => {
+    // Vendor login → Register screen
+    document.getElementById('register-link').addEventListener('click', e => {
+        e.preventDefault();
+        clearFormError('register-error');
+        document.getElementById('register-success')?.classList.add('hidden');
+        showScreen(registerScreen);
+    });
+
+    // Register screen → back to Login
+    document.getElementById('back-to-login-link').addEventListener('click', e => {
         e.preventDefault();
         clearFormError('vendor-error');
         showScreen(vendorLoginScreen);
-    });
-    document.getElementById('customer-login-link').addEventListener('click', e => {
-        e.preventDefault();
-        clearFormError('login-error');
-        showScreen(loginScreen);
     });
 
     document.getElementById('cart-btn').addEventListener('click', openCart);
