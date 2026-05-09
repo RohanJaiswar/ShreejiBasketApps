@@ -397,6 +397,33 @@ async function placeOrder() {
         const { error } = await sb.from('orders').insert([orderData]);
         if (error) throw error;
 
+        // ── Outstanding Container Tracking ──────────────────────────────────
+        // For each cart item whose product has container = true,
+        // add that item's quantity to the vendor's outstanding_containers count.
+        if (currentUser.type === 'vendor' && currentUser.id) {
+            const containerQty = cartItems.reduce((sum, { product, qty }) => {
+                return sum + (product.container === true ? qty : 0);
+            }, 0);
+
+            if (containerQty > 0) {
+                // Fetch current value, then increment
+                const { data: vendorData, error: fetchErr } = await sb
+                    .from('vendors')
+                    .select('outstanding_containers')
+                    .eq('id', currentUser.id)
+                    .single();
+
+                if (!fetchErr && vendorData) {
+                    const current = vendorData.outstanding_containers || 0;
+                    await sb
+                        .from('vendors')
+                        .update({ outstanding_containers: current + containerQty })
+                        .eq('id', currentUser.id);
+                }
+            }
+        }
+        // ───────────────────────────────────────────────────────────────────
+
         closeCart();
         cart = {};
         updateCartBadge();
