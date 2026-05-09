@@ -1,0 +1,14 @@
+{
+  "appId": "com.shreeji.basket",
+  "appName": "Shreeji Basket",
+  "webDir": "www",
+  "plugins": {
+    "FirebaseMessaging": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
+  },
+  "android": {
+    "allowMixedContent": true,
+    "backgroundColor": "#1e3a5f"
+  }
+}

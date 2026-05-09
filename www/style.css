@@ -1,0 +1,56 @@
+/* =========================================================
+   SHREEJI BASKET — Tailwind Premium Theme Additions
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+/* Safe area padding for mobile PWA bottom navigation */
+.pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+
+/* Hide scrollbar for category tabs & products */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Custom animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 20px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+.animate-fade-in-up {
+    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+.delay-100 {
+    animation-delay: 100ms;
+}
+
+/* Ensure images don't stretch improperly in product cards */
+.product-card img {
+    -webkit-user-drag: none;
+}
+
+/* Prevent double-tap zoom on iOS */
+button, a, .cat-tab-circle {
+    touch-action: manipulation;
+}
